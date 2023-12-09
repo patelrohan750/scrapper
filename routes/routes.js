@@ -51,6 +51,20 @@ router.get('/question/post', async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 })
+router.get('/recentposts/:num', async (req, res) => {
+    try {
+        const num = req.params.num ? req.params.num : 10;
+        const posts = await wp.recentPosts(num);
+        if(posts.length > 0){
+            res.json(posts);
+        } else{
+            res.send("NO RECENT POST FOUND");
+        }
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+})
 
 router.get('/imagetotext', async (req, res) => {
     try {
