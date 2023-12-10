@@ -66,9 +66,10 @@ router.get('/recentposts/:num', async (req, res) => {
     }
 })
 
-router.get('/imagetotext', async (req, res) => {
+router.get('/todayposts', async (req, res) => {
     try {
-        
+        const posts = await wp.todayPosts();
+        res.json(posts);
     }
     catch (error) {
         res.status(400).json({ message: error.message })
