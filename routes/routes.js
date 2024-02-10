@@ -3,6 +3,8 @@ const router = express.Router();
 const questionsData = require('../lib/jsonManager');
 const scraper = require('../lib/scraper');
 const wp = require('../lib/wordpress');
+const axios = require("axios")    
+
 // GET ALL Question Data
 router.get('/', (req, res) => {
     res.send('Hello World, from express');
@@ -75,5 +77,56 @@ router.get('/todayposts', async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 })
+
+// Function to create a delay
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+router.get('/bulkpostgenerate', async (req, res) => {
+    const count = parseInt(req.query.count);
+
+    // Check if count is an integer
+    if (!Number.isInteger(count)) {
+        return res.status(400).json({ error: 'Count must be an integer' });
+    }
+    const postIds = [];
+
+    // Define a function to make the post requests recursively
+    async function makePostRequests(count) {
+        if (count <= 0) {
+            return; // Base case for recursion
+        }
+
+        try {
+        // Make the POST request to /api/question/post
+        const response = await axios.get('http://localhost:3000/api/question/post');
+        console.log(`Response from /api/question/post (${count} remaining):`, response.data.id);
+
+        // Extract and store the ID from the response
+        postIds.push(response.data.id);
+
+        // Recursive call with count decremented
+        await makePostRequests(count - 1);
+        } catch (error) {
+            console.error(`Error making POST request to /api/question/post (${count} remaining):`, error);
+            throw error;
+        }
+    }
+    
+    // Call the function to make the post requests
+    try {
+        await delay(3000); // Delay for 3 seconds
+        await makePostRequests(count);    
+        // Send the response with the list of post IDs
+        res.status(200).json({ message: 'Bulk post generation completed successfully', postIds });
+    } catch (error) {
+        console.error('Error making post requests:', error);
+        res.status(500).send('Internal Server Error');
+    }
+
+    
+})
+
 
 module.exports = router;
